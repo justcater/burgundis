@@ -6,10 +6,10 @@ An *in-memory key-value store* in C++ with a line-based, `\n` delimited TCP prot
 
 - Concurrent client handling (thread-per-connection via mutex protection)
 - Multi-command support over a single connection
+- Persistance via a write-ahead log
 
 ## Status
 
-- In-memory only, data doesn't survive a restart - write-ahead log to be added
 - No TTL/Expiration
 - Text protocol only
 

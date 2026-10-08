@@ -7,18 +7,58 @@
 #include <netinet/in.h>
 #include <thread>
 
-Server::Server(int port): port(port) {}
+Server::Server(int port): port(port) {
+    replay_log();
+    log.open("data.log", std::ios::app);
+    if (!log.is_open()) {
+        std::cerr << "open() failed\n";
+    }
+}
 
 Server::~Server(){
     if (server_fd >= 0) {
         close(server_fd);
     }
+    if (log.is_open()) {
+        log.close();
+    }
 }
 
-std::string Server::handle_command(const std::string& input) {
+bool Server::log_command(const std::string& input) {
+    log << input << '\n';
+    log.flush();
+    if (!log) {
+        return false;
+    }
+    return true;
+}
+
+void Server::replay_log() {
+    std::ifstream in("data.log");
+    std::string line;
+
+    if (!in.is_open()) return;
+
+    while(std::getline(in, line)) {
+        if (line.empty()) continue;
+        handle_command(line, false);
+    }
+
+    if (!in.eof()) {
+        std::cerr << "Warning: reading from log failed.\n";
+    }
+}
+
+std::string Server::handle_command(const std::string& input, bool logging) {
     std::istringstream iss(input);
     std::string cmd, key, value;
     iss >> cmd >> key >> value;
+
+    if ((cmd == "SET" || cmd == "DEL") && logging == true) {
+        if(!log_command(input)) {
+            return "ERR writing to log failed\n";
+        }
+    }
 
     if (cmd == "SET") {
         store[key] = value;
@@ -52,7 +92,7 @@ void Server::handle_client(int client_fd){
             if (line.empty()) continue;
 
             std::lock_guard<std::mutex> lock(store_mutex);
-            std::string reply = handle_command(line);
+            std::string reply = handle_command(line, true);
             write(client_fd, reply.c_str(), reply.size());
         }
     }
