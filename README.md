@@ -24,13 +24,17 @@ An *in-memory key-value store* in C++ with a line-based, `\n` delimited TCP prot
 git clone https://github.com/justcater/burgundis.git
 cd burgundis
 make
-make run # or ./build/burgundis
+./build/burgundis
+```
+By default, the server listens to port **6379**. To specify a different port, run:
+```bash
+./build/burgundis <your_port>
 ```
 
 ## Usage
 
 ```bash
-nc localhost 6379 # default port
+nc localhost 6379
 SET name burgundy
 OK
 GET name
